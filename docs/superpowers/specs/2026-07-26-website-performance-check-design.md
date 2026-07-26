@@ -11,7 +11,7 @@ side panel opens showing that site's organic SEO strength at a glance:
 
 - **Overall Score** (0–100)
 - **Organic ranked keywords** (count + position distribution)
-- **Estimated monthly organic traffic**
+- **Estimated monthly organic traffic** — current number **plus a month-over-month graph**
 - **AI Verdict** — a short plain-English assessment plus 2–3 opportunities
 
 Data comes from the user's DataForSEO account (REST API). The AI verdict is generated
@@ -21,7 +21,7 @@ via the user's OpenRouter account, routed to a Claude model.
 
 - No backlinks / referring domains (may be added later).
 - No multi-user support, accounts, or sync. Credentials live in local extension storage.
-- No historical trend charts. v1 shows the current estimate only.
+- No interactive/zoomable charts. The month-over-month graph is a simple read-only line.
 - No paid-search / PPC data.
 
 ## Architecture
@@ -55,14 +55,22 @@ because this is a single-user personal tool.
 1. Panel opens, asks the service worker to analyze the active tab.
 2. Service worker extracts the domain from the tab URL (e.g. `www.nike.com` → `nike.com`).
    Skips `chrome://`, `about:`, extension, and blank pages with a friendly message.
-3. **DataForSEO call** — `POST /v3/dataforseo_labs/google/domain_rank_overview/live`
-   - Auth: HTTP Basic, `base64(login:password)`
-   - Body: `[{ "target": "<domain>", "location_code": <code>, "language_code": "<lang>" }]`
-   - Returns (under `tasks[0].result[0].items[0].metrics.organic`):
-     - `etv` — estimated monthly organic traffic (visits/month)
-     - `count` — total ranked organic keywords
-     - `pos_1`, `pos_2_3`, `pos_4_10`, `pos_11_20`, `pos_21_30`, ... — keyword counts by
-       SERP position bucket
+3. **DataForSEO calls** — two live requests (run concurrently), same Basic auth and the
+   same `location_code` / `language_code`:
+
+   a. **Current snapshot** — `POST /v3/dataforseo_labs/google/domain_rank_overview/live`
+      - Body: `[{ "target": "<domain>", "location_code": <code>, "language_code": "<lang>" }]`
+      - Returns (under `tasks[0].result[0].items[0].metrics.organic`):
+        - `etv` — estimated monthly organic traffic (visits/month)
+        - `count` — total ranked organic keywords
+        - `pos_1`, `pos_2_3`, `pos_4_10`, `pos_11_20`, `pos_21_30`, ... — keyword counts by
+          SERP position bucket
+
+   b. **History** — `POST /v3/dataforseo_labs/google/historical_rank_overview/live`
+      - Body: `[{ "target": "<domain>", "location_code": <code>, "language_code": "<lang>" }]`
+      - Returns `tasks[0].result[0].items[]`, one entry per month, each with `year`,
+        `month`, and `metrics.organic.etv`. We take the most recent ~12 months, sorted
+        oldest→newest, to build the month-over-month traffic series.
 4. **Compute Overall Score** locally (formula below).
 5. **OpenRouter call** (only if an OpenRouter key is set) —
    `POST https://openrouter.ai/api/v1/chat/completions`
@@ -71,8 +79,12 @@ because this is a single-user personal tool.
    - Prompt: the domain + the computed metrics + score, asking for one verdict sentence
      and 2–3 concrete opportunities. Response requested as compact JSON
      (`{ "verdict": "...", "opportunities": ["...", "..."] }`) and parsed defensively.
-6. Panel renders score, metric cards, and (if present) the AI verdict. Shows a
-   "last checked" timestamp and a Refresh button.
+6. Panel renders score, metric cards, and (if present) the AI verdict. The traffic card
+   shows the **current monthly estimate as a big number above a month-over-month line
+   graph** (last ~12 months, drawn as inline SVG — no charting library), with a caption
+   noting the latest month and its change vs. the prior month. If history has only one
+   usable data point, the number shows and the graph is hidden. Shows a "last checked"
+   timestamp and a Refresh button.
 
 ### Result object (service worker → panel)
 ```
@@ -80,7 +92,11 @@ because this is a single-user personal tool.
   domain: string,
   score: number,            // 0–100
   scoreBand: "low"|"medium"|"high",
-  traffic: number,          // etv, monthly organic visits
+  traffic: number,          // etv, current monthly organic visits
+  history: [                // month-over-month organic traffic, oldest → newest
+    { label: string,        // e.g. "2025-08"
+      traffic: number }
+  ],
   keywords: {
     total: number,
     top3: number,           // pos_1 + pos_2_3
@@ -113,7 +129,7 @@ Total rounded to an integer. Bands: **0–39 low (red)**, **40–69 medium (ambe
   state with a button that opens the options page.
 - **Non-analyzable page** (`chrome://`, new tab, blank): friendly "Navigate to a website
   to analyze it" message, no API call made.
-- **DataForSEO error / no data for domain** (new or unknown domain returns empty
+- **DataForSEO error / no data for domain (either call)** (new or unknown domain returns empty
   `result`): show "No organic data found for this domain" rather than a broken score.
 - **DataForSEO auth failure (401) or quota error:** surface the API's status message.
 - **OpenRouter failure or unparseable response:** metrics still render; the AI Verdict
@@ -133,12 +149,13 @@ src/
   options.html        # settings form
   options.js          # load/save credentials & prefs to chrome.storage.local
   lib/
-    dataforseo.js     # domainRankOverview(domain, opts) → normalized metrics
+    dataforseo.js     # domainRankOverview() + historicalRankOverview() → normalized data
     openrouter.js     # aiVerdict(domain, metrics, score, opts) → {verdict, opportunities}
     score.js          # computeScore(metrics) → {score, band}  (pure, unit-testable)
     domain.js         # urlToDomain(url) → registrable domain  (pure, unit-testable)
+    chart.js          # trafficChartSvg(history) → SVG line-chart string  (pure, unit-testable)
 icons/                # 16/32/48/128 px
-test/                 # unit tests for score.js and domain.js
+test/                 # unit tests for score.js, domain.js, chart.js
 ```
 
 ## Testing
@@ -147,6 +164,8 @@ test/                 # unit tests for score.js and domain.js
   log-scale clamps, and division-by-zero safety (count = 0).
 - **`domain.js`** — pure function; tests for `www.` stripping, subdomains, paths/query
   removal, and non-http URLs returning null.
+- **`chart.js`** — pure function; tests that N points produce a valid SVG path, that a
+  single point hides the graph, and that a flat/zero series doesn't divide by zero.
 - **API modules** — thin fetch wrappers; verified by manual smoke test against a known
   domain (e.g. a site with clear organic presence) plus one unknown/empty domain.
 - **End-to-end** — load unpacked, enter credentials, click through a few live sites.
@@ -154,6 +173,5 @@ test/                 # unit tests for score.js and domain.js
 ## Open Items / Future (not in v1)
 
 - Backlinks + referring-domains component in the score.
-- Historical traffic sparkline (DataForSEO supports historical variants).
 - Location selector in the panel itself (not just settings).
 - Caching recent lookups to save API calls on repeat visits.
