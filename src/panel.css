@@ -1,0 +1,38 @@
+:root {
+  --low: #dc2626; --medium: #d97706; --high: #16a34a;
+  --ink: #1f2937; --muted: #6b7280; --line: #e5e7eb; --accent: #2563eb;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px system-ui, sans-serif; color: var(--ink); }
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: #fff;
+}
+#domain { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.header-actions button {
+  border: 0; background: transparent; font-size: 16px; cursor: pointer; color: var(--muted); padding: 4px 6px;
+}
+main { padding: 14px; }
+.loading, .message { color: var(--muted); padding: 20px 4px; text-align: center; }
+.message button {
+  display: inline-block; margin-top: 12px; background: var(--accent); color: #fff;
+  border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer;
+}
+.score-wrap { text-align: center; margin-bottom: 16px; }
+.score { font-size: 52px; font-weight: 800; line-height: 1; }
+.score.low { color: var(--low); } .score.medium { color: var(--medium); } .score.high { color: var(--high); }
+.score-label { color: var(--muted); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+.card h3 { margin: 0 0 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.big-number { font-size: 26px; font-weight: 700; }
+.kw-breakdown { display: flex; gap: 14px; margin-top: 8px; }
+.kw-breakdown div { flex: 1; }
+.kw-breakdown b { display: block; font-size: 18px; }
+.kw-breakdown span { color: var(--muted); font-size: 11px; }
+.traffic-chart { color: var(--accent); margin-top: 8px; display: block; }
+.chart-caption { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.chart-caption .up { color: var(--high); } .chart-caption .down { color: var(--low); }
+.ai-verdict p { margin: 0 0 8px; }
+.ai-verdict ul { margin: 0; padding-left: 18px; }
+.ai-verdict li { margin-bottom: 4px; }
+footer { color: var(--muted); font-size: 11px; text-align: center; padding: 4px 0 14px; }
