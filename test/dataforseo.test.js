@@ -1,0 +1,63 @@
+// test/dataforseo.test.js
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { parseRankOverview, parseHistory } from "../src/lib/dataforseo.js";
+
+const rankJson = {
+  tasks: [{
+    status_code: 20000,
+    result: [{
+      items: [{
+        metrics: {
+          organic: { etv: 1234.5, count: 5000, pos_1: 100, pos_2_3: 200, pos_4_10: 300 }
+        }
+      }]
+    }]
+  }]
+};
+
+const historyJson = {
+  tasks: [{
+    status_code: 20000,
+    result: [{
+      items: [
+        { year: 2025, month: 7, metrics: { organic: { etv: 1200 } } },
+        { year: 2025, month: 5, metrics: { organic: { etv: 900 } } },
+        { year: 2025, month: 6, metrics: { organic: { etv: 1000 } } }
+      ]
+    }]
+  }]
+};
+
+test("parseRankOverview pulls organic metrics", () => {
+  const m = parseRankOverview(rankJson);
+  assert.deepEqual(m, { etv: 1234.5, count: 5000, pos_1: 100, pos_2_3: 200, pos_4_10: 300 });
+});
+
+test("parseRankOverview returns null when no items", () => {
+  assert.equal(parseRankOverview({ tasks: [{ result: [{ items: [] }] }] }), null);
+  assert.equal(parseRankOverview({}), null);
+});
+
+test("parseHistory sorts oldest→newest and labels YYYY-MM", () => {
+  const h = parseHistory(historyJson);
+  assert.deepEqual(h, [
+    { label: "2025-05", traffic: 900 },
+    { label: "2025-06", traffic: 1000 },
+    { label: "2025-07", traffic: 1200 }
+  ]);
+});
+
+test("parseHistory caps to last N months", () => {
+  const items = [];
+  for (let mth = 1; mth <= 18; mth++) {
+    items.push({ year: 2025, month: mth, metrics: { organic: { etv: mth } } });
+  }
+  const h = parseHistory({ tasks: [{ result: [{ items }] }] }, 12);
+  assert.equal(h.length, 12);
+  assert.equal(h[0].label, "2025-07"); // months 7..18 kept (with month>12 just an id here)
+});
+
+test("parseHistory returns [] for missing data", () => {
+  assert.deepEqual(parseHistory({}), []);
+});
