@@ -1,5 +1,6 @@
 // src/options.js
-const DEFAULTS = { orModel: "anthropic/claude-3.5-haiku", locationCode: 2840, languageCode: "en" };
+import { SETTINGS_DEFAULTS as DEFAULTS } from "./lib/defaults.js";
+
 const FIELDS = ["dfLogin", "dfPassword", "orKey", "orModel", "locationCode", "languageCode"];
 
 async function load() {

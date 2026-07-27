@@ -3,8 +3,7 @@ import { urlToDomain } from "./lib/domain.js";
 import { computeScore } from "./lib/score.js";
 import { domainRankOverview, historicalRankOverview } from "./lib/dataforseo.js";
 import { aiVerdict } from "./lib/openrouter.js";
-
-const DEFAULTS = { orModel: "anthropic/claude-3.5-haiku", locationCode: 2840, languageCode: "en" };
+import { SETTINGS_DEFAULTS as DEFAULTS } from "./lib/defaults.js";
 
 // Clicking the toolbar icon opens the side panel.
 chrome.runtime.onInstalled.addListener(() => {

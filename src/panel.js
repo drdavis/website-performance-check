@@ -3,7 +3,9 @@ import { trafficChartSvg } from "./lib/chart.js";
 
 const app = document.getElementById("app");
 const domainEl = document.getElementById("domain");
+const refreshBtn = document.getElementById("refresh");
 const nf = new Intl.NumberFormat();
+let generation = 0;
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
@@ -100,15 +102,21 @@ function wireSettingsButton() {
 }
 
 async function run() {
+  const myGen = ++generation;
+  refreshBtn.disabled = true;
   app.innerHTML = `<div class="loading">Analyzing…</div>`;
   try {
     const res = await chrome.runtime.sendMessage({ type: "analyze" });
+    if (myGen !== generation) return;
     render(res);
   } catch (e) {
+    if (myGen !== generation) return;
     render({ error: e?.message || "Could not reach the analyzer." });
+  } finally {
+    if (myGen === generation) refreshBtn.disabled = false;
   }
 }
 
-document.getElementById("refresh").addEventListener("click", run);
+refreshBtn.addEventListener("click", run);
 document.getElementById("settings").addEventListener("click", () => chrome.runtime.openOptionsPage());
 run();
