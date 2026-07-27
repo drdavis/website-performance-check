@@ -22,12 +22,17 @@ export function parseHistory(json, limit = 12) {
     .map((it) => ({
       year: Number(it.year) || 0,
       month: Number(it.month) || 0,
-      traffic: Number(it?.metrics?.organic?.etv) || 0
+      traffic: Number(it?.metrics?.organic?.etv) || 0,
+      keywords: Number(it?.metrics?.organic?.count) || 0
     }))
     .filter((r) => r.year && r.month)
     .sort((a, b) => a.year - b.year || a.month - b.month)
     .slice(-limit)
-    .map((r) => ({ label: `${r.year}-${String(r.month).padStart(2, "0")}`, traffic: r.traffic }));
+    .map((r) => ({
+      label: `${r.year}-${String(r.month).padStart(2, "0")}`,
+      traffic: r.traffic,
+      keywords: r.keywords
+    }));
 }
 
 // ---- Network wrappers (run in the service worker; btoa/fetch are globals there) ----

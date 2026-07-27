@@ -1,10 +1,9 @@
 // src/panel.js
-import { trafficChartSvg } from "./lib/chart.js";
+import { trafficAreaChartSvg, formatMonth, compactNumber } from "./lib/chart.js";
 
 const app = document.getElementById("app");
 const domainEl = document.getElementById("domain");
 const refreshBtn = document.getElementById("refresh");
-const nf = new Intl.NumberFormat();
 let generation = 0;
 
 function esc(s) {
@@ -18,38 +17,45 @@ function messageView(text, withSettings) {
   return `<div class="message">${esc(text)}<br>${btn}</div>`;
 }
 
-function chartCaption(history) {
-  if (!history || history.length < 2) return "";
-  const last = history[history.length - 1];
-  const prev = history[history.length - 2];
-  const diff = last.traffic - prev.traffic;
-  if (prev.traffic === 0) return `<div class="chart-caption">${esc(last.label)}: ${nf.format(last.traffic)}</div>`;
-  const pct = Math.round((diff / prev.traffic) * 100);
-  const cls = diff >= 0 ? "up" : "down";
-  const arrow = diff >= 0 ? "▲" : "▼";
-  return `<div class="chart-caption">${esc(last.label)}: ${nf.format(last.traffic)} ` +
-    `<span class="${cls}">${arrow} ${Math.abs(pct)}% vs prior month</span></div>`;
+function deltaHtml(n) {
+  if (n === null || n === undefined) return `<div class="delta empty"></div>`;
+  const up = n >= 0;
+  const cls = up ? "delta up" : "delta down";
+  const sign = up ? "+" : "−";
+  return `<div class="${cls}">${sign}${compactNumber(Math.abs(n))}<span>Since Last Month</span></div>`;
 }
 
-function trafficCard(r) {
-  const chart = trafficChartSvg(r.history);
-  const caption = chartCaption(r.history);
-  return `<div class="card">
-    <h3>Estimated Monthly Organic Traffic</h3>
-    <div class="big-number">${nf.format(r.traffic)}</div>
-    ${chart}${caption}
+function statCard(label, value, deltaN) {
+  return `<div class="stat">
+    <div class="stat-num">${esc(value)}</div>
+    <div class="stat-label">${esc(label)}</div>
+    ${deltaHtml(deltaN)}
   </div>`;
 }
 
-function keywordsCard(k) {
+function scoreCard(score, band) {
+  return `<div class="stat">
+    <div class="stat-num band-${esc(band)}">${esc(String(score))}</div>
+    <div class="stat-label">Overall Score</div>
+    <div class="delta empty"></div>
+  </div>`;
+}
+
+function rangeLabel(history) {
+  if (!history || history.length < 2) return "";
+  return `${formatMonth(history[0].label)} - ${formatMonth(history[history.length - 1].label)}`;
+}
+
+function trafficChartCard(r) {
+  const chart = trafficAreaChartSvg(r.history);
+  const range = rangeLabel(r.history);
+  const body = chart || `<div class="muted">Not enough history to chart yet.</div>`;
   return `<div class="card">
-    <h3>Organic Keywords</h3>
-    <div class="big-number">${nf.format(k.total)}</div>
-    <div class="kw-breakdown">
-      <div><b>${nf.format(k.top3)}</b><span>Top 3</span></div>
-      <div><b>${nf.format(k.top10)}</b><span>Top 10</span></div>
-      <div><b>${nf.format(k.rest)}</b><span>Rest</span></div>
+    <div class="card-head">
+      <h3>Traffic Overview</h3>
+      ${range ? `<span class="range">${esc(range)}</span>` : ""}
     </div>
+    ${body}
   </div>`;
 }
 
@@ -57,7 +63,7 @@ function aiCard(ai) {
   if (!ai || !ai.verdict) return "";
   const opps = (ai.opportunities || []).map((o) => `<li>${esc(o)}</li>`).join("");
   return `<div class="card ai-verdict">
-    <h3>AI Verdict</h3>
+    <div class="card-head"><h3>AI Verdict</h3></div>
     <p>${esc(ai.verdict)}</p>
     ${opps ? `<ul>${opps}</ul>` : ""}
   </div>`;
@@ -65,14 +71,14 @@ function aiCard(ai) {
 
 function resultView(r) {
   return `
-    <div class="score-wrap">
-      <div class="score ${esc(r.scoreBand)}">${r.score}</div>
-      <div class="score-label">Overall Score</div>
+    <div class="stats">
+      ${statCard("Organic Keywords", compactNumber(r.keywords.total), r.changes?.keywords)}
+      ${statCard("Organic Monthly Traffic", compactNumber(r.traffic), r.changes?.traffic)}
+      ${scoreCard(r.score, r.scoreBand)}
     </div>
-    ${keywordsCard(r.keywords)}
-    ${trafficCard(r)}
+    ${trafficChartCard(r)}
     ${aiCard(r.ai)}
-    <footer>Checked ${new Date(r.checkedAt).toLocaleString()}</footer>
+    <footer>Checked ${esc(new Date(r.checkedAt).toLocaleString())}</footer>
   `;
 }
 

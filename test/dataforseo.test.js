@@ -21,9 +21,9 @@ const historyJson = {
     status_code: 20000,
     result: [{
       items: [
-        { year: 2025, month: 7, metrics: { organic: { etv: 1200 } } },
-        { year: 2025, month: 5, metrics: { organic: { etv: 900 } } },
-        { year: 2025, month: 6, metrics: { organic: { etv: 1000 } } }
+        { year: 2025, month: 7, metrics: { organic: { etv: 1200, count: 160 } } },
+        { year: 2025, month: 5, metrics: { organic: { etv: 900, count: 120 } } },
+        { year: 2025, month: 6, metrics: { organic: { etv: 1000, count: 140 } } }
       ]
     }]
   }]
@@ -39,13 +39,24 @@ test("parseRankOverview returns null when no items", () => {
   assert.equal(parseRankOverview({}), null);
 });
 
-test("parseHistory sorts oldest→newest and labels YYYY-MM", () => {
+test("parseHistory sorts oldest→newest, labels YYYY-MM, and keeps keyword count", () => {
   const h = parseHistory(historyJson);
   assert.deepEqual(h, [
-    { label: "2025-05", traffic: 900 },
-    { label: "2025-06", traffic: 1000 },
-    { label: "2025-07", traffic: 1200 }
+    { label: "2025-05", traffic: 900, keywords: 120 },
+    { label: "2025-06", traffic: 1000, keywords: 140 },
+    { label: "2025-07", traffic: 1200, keywords: 160 }
   ]);
+});
+
+test("parseHistory defaults missing keyword count to 0", () => {
+  const h = parseHistory({
+    tasks: [{ result: [{ items: [
+      { year: 2025, month: 1, metrics: { organic: { etv: 10 } } },
+      { year: 2025, month: 2, metrics: { organic: { etv: 20 } } }
+    ] }] }]
+  });
+  assert.equal(h[0].keywords, 0);
+  assert.equal(h[1].keywords, 0);
 });
 
 test("parseHistory caps to last N months", () => {

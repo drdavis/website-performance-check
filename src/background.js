@@ -50,12 +50,23 @@ async function analyze() {
   const top3 = (metrics.pos_1 || 0) + (metrics.pos_2_3 || 0);
   const top10 = top3 + (metrics.pos_4_10 || 0);
 
+  // Month-over-month change from the last two history points (null if too little history).
+  const hist = history || [];
+  const changes = { keywords: null, traffic: null };
+  if (hist.length >= 2) {
+    const last = hist[hist.length - 1];
+    const prev = hist[hist.length - 2];
+    changes.traffic = Math.round((last.traffic || 0) - (prev.traffic || 0));
+    changes.keywords = Math.round((last.keywords || 0) - (prev.keywords || 0));
+  }
+
   const result = {
     domain,
     score,
     scoreBand: band,
     traffic: Math.round(metrics.etv || 0),
-    history: history || [],
+    history: hist,
+    changes,
     keywords: {
       total: metrics.count || 0,
       top3,
