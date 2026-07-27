@@ -57,7 +57,10 @@ async function analyze() {
     const last = hist[hist.length - 1];
     const prev = hist[hist.length - 2];
     changes.traffic = Math.round((last.traffic || 0) - (prev.traffic || 0));
-    changes.keywords = Math.round((last.keywords || 0) - (prev.keywords || 0));
+    // Only report a keyword delta if the history actually carries keyword counts;
+    // otherwise hide it rather than show a misleading "+0".
+    const hasKeywordData = hist.some((h) => (h.keywords || 0) > 0);
+    changes.keywords = hasKeywordData ? Math.round((last.keywords || 0) - (prev.keywords || 0)) : null;
   }
 
   const result = {
