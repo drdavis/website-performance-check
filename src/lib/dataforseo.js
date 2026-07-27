@@ -36,13 +36,22 @@ function authHeader(login, password) {
 }
 
 async function post(path, body, { login, password }) {
-  const res = await fetch(BASE + path, {
-    method: "POST",
-    headers: { Authorization: authHeader(login, password), "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+  let res;
+  try {
+    res = await fetch(BASE + path, {
+      method: "POST",
+      headers: { Authorization: authHeader(login, password), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (err) {
+    if (err.name === "TimeoutError") throw new Error("DataForSEO request timed out");
+    throw err;
+  }
   const json = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(`DataForSEO HTTP ${res.status}`);
+  if (!res.ok) {
+    throw new Error("DataForSEO HTTP " + res.status + (json?.status_message ? ": " + json.status_message : ""));
+  }
   const task = json?.tasks?.[0];
   if (task && task.status_code !== 20000) {
     throw new Error(task.status_message || "DataForSEO error");

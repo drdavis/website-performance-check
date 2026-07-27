@@ -9,8 +9,8 @@ test("buildPrompt includes domain and key numbers", () => {
   const p = buildPrompt("nike.com", metrics, 47);
   assert.ok(p.includes("nike.com"));
   assert.ok(p.includes("47"));
-  assert.ok(p.includes("500"));   // ranked keywords
-  assert.ok(p.includes("50"));    // top-3 = pos_1 + pos_2_3 = 50
+  assert.ok(p.includes("Ranked organic keywords: 500"));
+  assert.ok(p.includes("Keywords in top 3: 50"));
 });
 
 test("parseVerdict reads clean JSON", () => {
@@ -21,6 +21,14 @@ test("parseVerdict reads clean JSON", () => {
 
 test("parseVerdict extracts JSON embedded in prose", () => {
   const v = parseVerdict('Here you go:\n{"verdict":"Growing.","opportunities":["Blog more"]}\nThanks!');
+  assert.equal(v.verdict, "Growing.");
+  assert.deepEqual(v.opportunities, ["Blog more"]);
+});
+
+test("parseVerdict ignores trailing prose after the JSON object", () => {
+  const v = parseVerdict(
+    '{"verdict":"Growing.","opportunities":["Blog more"]}\n\nHope this helps :}'
+  );
   assert.equal(v.verdict, "Growing.");
   assert.deepEqual(v.opportunities, ["Blog more"]);
 });

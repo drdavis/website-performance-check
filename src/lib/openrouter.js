@@ -17,12 +17,47 @@ export function buildPrompt(domain, m, score) {
   ].join("\n");
 }
 
+// Finds the first top-level `{...}` object in text by walking brace depth,
+// ignoring braces inside double-quoted strings (honoring backslash escapes).
+// A naive /\{[\s\S]*\}/ regex spans to the LAST `}` in the text, which breaks
+// when the model appends trailing prose after the JSON (e.g. "...} Hope this
+// helps :}").
+function extractFirstJsonObject(text) {
+  const start = text.indexOf("{");
+  if (start === -1) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === "{") {
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 export function parseVerdict(text) {
   if (!text) return { verdict: "", opportunities: [] };
-  const match = text.match(/\{[\s\S]*\}/);
-  if (match) {
+  const candidate = extractFirstJsonObject(text);
+  if (candidate) {
     try {
-      const obj = JSON.parse(match[0]);
+      const obj = JSON.parse(candidate);
       if (obj && typeof obj.verdict === "string") {
         return {
           verdict: obj.verdict,
@@ -39,27 +74,34 @@ export function parseVerdict(text) {
 
 // ---- Network wrapper (service worker) ----
 export async function aiVerdict(domain, metrics, score, { apiKey, model }) {
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "X-Title": "Website Performance Check"
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.3,
-      messages: [
-        {
-          role: "system",
-          content:
-            'You are an SEO analyst. Respond ONLY with compact JSON of the form ' +
-            '{"verdict": "<one sentence>", "opportunities": ["...", "..."]}. No markdown, no prose.'
-        },
-        { role: "user", content: buildPrompt(domain, metrics, score) }
-      ]
-    })
-  });
+  let res;
+  try {
+    res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "X-Title": "Website Performance Check"
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.3,
+        messages: [
+          {
+            role: "system",
+            content:
+              'You are an SEO analyst. Respond ONLY with compact JSON of the form ' +
+              '{"verdict": "<one sentence>", "opportunities": ["...", "..."]}. No markdown, no prose.'
+          },
+          { role: "user", content: buildPrompt(domain, metrics, score) }
+        ]
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (err) {
+    if (err.name === "TimeoutError") throw new Error("OpenRouter request timed out");
+    throw err;
+  }
   if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}`);
   const json = await res.json();
   const content = json?.choices?.[0]?.message?.content || "";

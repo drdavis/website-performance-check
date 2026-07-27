@@ -1,8 +1,10 @@
 // src/lib/chart.js
 const round2 = (n) => Math.round(n * 100) / 100;
 
+export const DEFAULT_DIMS = { width: 260, height: 80, padX: 6, padY: 8 };
+
 export function chartPoints(history, dims) {
-  const { width = 260, height = 80, padX = 6, padY = 8 } = dims || {};
+  const { width, height, padX, padY } = { ...DEFAULT_DIMS, ...(dims || {}) };
   const rows = Array.isArray(history) ? history : [];
   const n = rows.length;
   if (n < 2) return [];
@@ -19,7 +21,7 @@ export function chartPoints(history, dims) {
 }
 
 export function trafficChartSvg(history, dims) {
-  const opts = { width: 260, height: 80, padX: 6, padY: 8, ...(dims || {}) };
+  const opts = { ...DEFAULT_DIMS, ...(dims || {}) };
   const pts = chartPoints(history, opts);
   if (pts.length < 2) return "";
   const poly = pts.map((p) => `${p.x},${p.y}`).join(" ");
