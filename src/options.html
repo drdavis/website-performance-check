@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Website Performance Check — Settings</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; max-width: 460px; margin: 24px auto; padding: 0 16px; color: #1f2937; }
+    h1 { font-size: 18px; }
+    label { display: block; margin: 14px 0 4px; font-weight: 600; }
+    input { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+    .hint { color: #6b7280; font-weight: 400; font-size: 12px; margin-top: 2px; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    button { margin-top: 18px; background: #2563eb; color: #fff; border: 0; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    #status { margin-left: 10px; color: #16a34a; }
+  </style>
+</head>
+<body>
+  <h1>Website Performance Check — Settings</h1>
+
+  <label>DataForSEO API login</label>
+  <input id="dfLogin" type="text" autocomplete="off" />
+
+  <label>DataForSEO API password</label>
+  <input id="dfPassword" type="password" autocomplete="off" />
+  <div class="hint">From your DataForSEO dashboard → API access. Used with HTTP Basic auth.</div>
+
+  <label>OpenRouter API key <span class="hint">(optional — enables the AI verdict)</span></label>
+  <input id="orKey" type="password" autocomplete="off" />
+
+  <label>OpenRouter model</label>
+  <input id="orModel" type="text" placeholder="anthropic/claude-3.5-haiku" />
+  <div class="hint">Any OpenRouter model slug. Default is a fast Claude Haiku model.</div>
+
+  <div class="row">
+    <div>
+      <label>Location code</label>
+      <input id="locationCode" type="number" placeholder="2840" />
+      <div class="hint">2840 = United States.</div>
+    </div>
+    <div>
+      <label>Language code</label>
+      <input id="languageCode" type="text" placeholder="en" />
+    </div>
+  </div>
+
+  <div>
+    <button id="save">Save</button>
+    <span id="status"></span>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>
