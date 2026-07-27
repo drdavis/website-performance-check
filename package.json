@@ -1,0 +1,10 @@
+{
+  "name": "website-performance-check",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "icons": "node tools/make-icons.mjs"
+  }
+}
