@@ -78,7 +78,7 @@ function resultView(r) {
     </div>
     ${trafficChartCard(r)}
     ${aiCard(r.ai)}
-    <footer>Checked ${esc(new Date(r.checkedAt).toLocaleString())}</footer>
+    <footer>Checked ${esc(new Date(r.checkedAt).toLocaleString())}<br>Built by D3 Digital Media</footer>
   `;
 }
 
