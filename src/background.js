@@ -1,7 +1,13 @@
 // src/background.js
 import { urlToDomain } from "./lib/domain.js";
 import { computeScore } from "./lib/score.js";
-import { domainRankOverview, historicalRankOverview } from "./lib/dataforseo.js";
+import {
+  domainRankOverview,
+  historicalRankOverview,
+  backlinksSummary,
+  estimateAvgPosition
+} from "./lib/dataforseo.js";
+import { checkSitemap } from "./lib/sitemap.js";
 import { aiVerdict } from "./lib/openrouter.js";
 import { SETTINGS_DEFAULTS as DEFAULTS } from "./lib/defaults.js";
 
@@ -35,11 +41,14 @@ async function analyze() {
     languageCode: s.languageCode || DEFAULTS.languageCode
   };
 
-  let metrics, history;
+  // Core metrics must succeed; backlinks, history, and the sitemap check are best-effort.
+  let metrics, history, backlinks, sitemap;
   try {
-    [metrics, history] = await Promise.all([
+    [metrics, history, backlinks, sitemap] = await Promise.all([
       domainRankOverview(domain, dfOpts),
-      historicalRankOverview(domain, dfOpts).catch(() => []) // history is best-effort
+      historicalRankOverview(domain, dfOpts).catch(() => []),
+      backlinksSummary(domain, dfOpts).catch(() => null),
+      checkSitemap(domain).catch(() => null)
     ]);
   } catch (e) {
     return { domain, error: e.message || "DataForSEO request failed." };
@@ -68,6 +77,9 @@ async function analyze() {
     score,
     scoreBand: band,
     traffic: Math.round(metrics.etv || 0),
+    avgPosition: estimateAvgPosition(metrics),
+    backlinks: backlinks || null,
+    sitemap: sitemap || null,
     history: hist,
     changes,
     keywords: {
