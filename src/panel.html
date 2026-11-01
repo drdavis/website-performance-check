@@ -13,7 +13,15 @@
       <button id="settings" title="Settings" aria-label="Settings">⚙</button>
     </div>
   </header>
-  <main id="app"><div class="loading">Analyzing…</div></main>
+  <main id="app">
+    <div class="loading">
+      <svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
+        <circle class="track" cx="25" cy="25" r="20"></circle>
+        <circle class="arc" cx="25" cy="25" r="20"></circle>
+      </svg>
+      <div class="loading-text">Analyzing<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+    </div>
+  </main>
   <script type="module" src="panel.js"></script>
 </body>
 </html>
