@@ -56,7 +56,35 @@ header {
 
 main { padding: 14px; }
 
-.loading, .message { color: var(--muted); padding: 26px 6px; text-align: center; }
+.message { color: var(--muted); padding: 26px 6px; text-align: center; }
+
+/* Loading spinner (cyan gauge sweep that echoes the icon) */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 54px 6px;
+}
+.spinner { width: 46px; height: 46px; animation: wpc-spin 0.9s linear infinite; transform-origin: center; }
+.spinner .track { fill: none; stroke: var(--line); stroke-width: 5; }
+.spinner .arc {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 31 126; /* ~90° arc of the ~126 circumference */
+}
+.loading-text { font-size: 13px; font-weight: 600; color: var(--ink); }
+.loading-text .dots span { animation: wpc-blink 1.4s infinite both; }
+.loading-text .dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-text .dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes wpc-spin { to { transform: rotate(360deg); } }
+@keyframes wpc-blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 2.4s; }
+  .loading-text .dots span { animation: none; opacity: 1; }
+}
 .message button {
   display: inline-block;
   margin-top: 12px;

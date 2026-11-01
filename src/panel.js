@@ -18,6 +18,16 @@ function messageView(text, withSettings) {
   return `<div class="message">${esc(text)}<br>${btn}</div>`;
 }
 
+function loadingView() {
+  return `<div class="loading">
+    <svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
+      <circle class="track" cx="25" cy="25" r="20"></circle>
+      <circle class="arc" cx="25" cy="25" r="20"></circle>
+    </svg>
+    <div class="loading-text">Analyzing<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+  </div>`;
+}
+
 function deltaHtml(n) {
   if (n === null || n === undefined) return `<div class="delta empty"></div>`;
   const up = n >= 0;
@@ -168,7 +178,7 @@ function wireSettingsButton() {
 async function run() {
   const myGen = ++generation;
   refreshBtn.disabled = true;
-  app.innerHTML = `<div class="loading">Analyzing…</div>`;
+  app.innerHTML = loadingView();
   try {
     const res = await chrome.runtime.sendMessage({ type: "analyze" });
     if (myGen !== generation) return;
