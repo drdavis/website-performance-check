@@ -132,10 +132,10 @@ function resultView(r) {
       ${avgPositionCard(r.avgPosition)}
       ${scoreCard(r.score, r.scoreBand)}
     </div>
-    ${trafficChartCard(r)}
-    ${sitemapCard(r.sitemap)}
-    ${aiCard(r.ai)}
     ${backlinksBlock(r.backlinks)}
+    ${trafficChartCard(r)}
+    ${aiCard(r.ai)}
+    ${sitemapCard(r.sitemap)}
     <footer>Checked ${esc(new Date(r.checkedAt).toLocaleString())}<br>Built by D3 Digital Media</footer>
   `;
 }
