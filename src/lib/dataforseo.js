@@ -11,7 +11,44 @@ export function parseRankOverview(json) {
     count: Number(o.count) || 0,
     pos_1: Number(o.pos_1) || 0,
     pos_2_3: Number(o.pos_2_3) || 0,
-    pos_4_10: Number(o.pos_4_10) || 0
+    pos_4_10: Number(o.pos_4_10) || 0,
+    pos_11_20: Number(o.pos_11_20) || 0,
+    pos_21_30: Number(o.pos_21_30) || 0,
+    pos_31_40: Number(o.pos_31_40) || 0,
+    pos_41_50: Number(o.pos_41_50) || 0,
+    pos_51_100: Number(o.pos_51_100) || 0
+  };
+}
+
+// Midpoint rank of each SERP position bucket, used to estimate the average position.
+const POS_MIDPOINTS = {
+  pos_1: 1, pos_2_3: 2.5, pos_4_10: 7, pos_11_20: 15.5,
+  pos_21_30: 25.5, pos_31_40: 35.5, pos_41_50: 45.5, pos_51_100: 75.5
+};
+
+// Estimated average organic position, weighted by how many keywords sit in each bucket.
+// Returns null when there are no bucketed keywords. Rounded to one decimal.
+export function estimateAvgPosition(metrics) {
+  if (!metrics) return null;
+  let weighted = 0;
+  let total = 0;
+  for (const key in POS_MIDPOINTS) {
+    const c = Number(metrics[key]) || 0;
+    weighted += c * POS_MIDPOINTS[key];
+    total += c;
+  }
+  if (total === 0) return null;
+  return Math.round((weighted / total) * 10) / 10;
+}
+
+export function parseBacklinksSummary(json) {
+  const r = json?.tasks?.[0]?.result?.[0];
+  if (!r) return null;
+  return {
+    total: Number(r.backlinks) || 0,
+    referringDomains: Number(r.referring_domains) || 0,
+    referringMainDomains: Number(r.referring_main_domains) || 0,
+    rank: Number(r.rank) || 0
   };
 }
 
@@ -80,4 +117,11 @@ export async function historicalRankOverview(domain, o) {
     o
   );
   return parseHistory(json);
+}
+
+// Backlinks summary uses the DataForSEO Backlinks API (a separate product from Labs).
+// Target is the bare domain; location/language do not apply.
+export async function backlinksSummary(domain, o) {
+  const json = await post("/backlinks/summary/live", [{ target: domain }], o);
+  return parseBacklinksSummary(json);
 }

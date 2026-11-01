@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Organic SEO score, keywords, and month-over-month traffic for the current site, via DataForSEO. By D3 Digital Media.",
   "permissions": ["sidePanel", "tabs", "storage"],
-  "host_permissions": ["https://api.dataforseo.com/*", "https://openrouter.ai/*"],
+  "host_permissions": ["https://*/*", "http://*/*"],
   "background": { "service_worker": "src/background.js", "type": "module" },
   "action": { "default_title": "Website Performance Check" },
   "side_panel": { "default_path": "src/panel.html" },

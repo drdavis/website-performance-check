@@ -5,6 +5,7 @@ const app = document.getElementById("app");
 const domainEl = document.getElementById("domain");
 const refreshBtn = document.getElementById("refresh");
 let generation = 0;
+const fullNum = (n) => new Intl.NumberFormat().format(Math.round(Number(n) || 0));
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
@@ -41,6 +42,60 @@ function scoreCard(score, band) {
   </div>`;
 }
 
+function avgPositionCard(avg) {
+  const value = avg === null || avg === undefined ? "—" : String(avg);
+  return `<div class="stat">
+    <div class="stat-num">${esc(value)}</div>
+    <div class="stat-label">Avg. Position (est.)</div>
+    <div class="delta empty"></div>
+  </div>`;
+}
+
+function backlinksBlock(b) {
+  if (!b) {
+    return `<div class="backlinks-block unavailable">
+      <div class="bl-num">—</div>
+      <div class="bl-meta">
+        <div class="bl-label">Backlinks</div>
+        <div class="bl-sub">Data unavailable (check your DataForSEO plan)</div>
+      </div>
+    </div>`;
+  }
+  return `<div class="backlinks-block">
+    <div class="bl-num">${esc(fullNum(b.total))}</div>
+    <div class="bl-meta">
+      <div class="bl-label">Backlinks</div>
+      <div class="bl-sub">${esc(fullNum(b.referringDomains))} referring domains</div>
+    </div>
+  </div>`;
+}
+
+function sitemapCard(s) {
+  if (!s) {
+    return `<div class="card">
+      <div class="card-head"><h3>Sitemap</h3></div>
+      <div class="muted">Could not check the sitemap.</div>
+    </div>`;
+  }
+  if (!s.found) {
+    return `<div class="card">
+      <div class="card-head"><h3>Sitemap</h3></div>
+      <div class="sitemap-row bad">✗ No sitemap found</div>
+    </div>`;
+  }
+  const detail = s.type === "index"
+    ? `${compactNumber(s.urlCount)} child sitemaps`
+    : `${compactNumber(s.urlCount)} URLs`;
+  return `<div class="card">
+    <div class="card-head">
+      <h3>Sitemap</h3>
+      <span class="range">${s.inRobots ? "in robots.txt" : "not in robots.txt"}</span>
+    </div>
+    <div class="sitemap-row ok">✓ Found · ${esc(detail)}</div>
+    <div class="sitemap-url">${esc(s.url)}</div>
+  </div>`;
+}
+
 function rangeLabel(history) {
   if (!history || history.length < 2) return "";
   return `${formatMonth(history[0].label)} - ${formatMonth(history[history.length - 1].label)}`;
@@ -71,12 +126,15 @@ function aiCard(ai) {
 
 function resultView(r) {
   return `
+    ${backlinksBlock(r.backlinks)}
     <div class="stats">
       ${statCard("Organic Keywords", compactNumber(r.keywords.total), r.changes?.keywords)}
       ${statCard("Organic Monthly Traffic", compactNumber(r.traffic), r.changes?.traffic)}
+      ${avgPositionCard(r.avgPosition)}
       ${scoreCard(r.score, r.scoreBand)}
     </div>
     ${trafficChartCard(r)}
+    ${sitemapCard(r.sitemap)}
     ${aiCard(r.ai)}
     <footer>Checked ${esc(new Date(r.checkedAt).toLocaleString())}<br>Built by D3 Digital Media</footer>
   `;

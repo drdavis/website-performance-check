@@ -69,10 +69,33 @@ main { padding: 14px; }
   cursor: pointer;
 }
 
-/* Stat cards row */
+/* Backlinks top block */
+.backlinks-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(16, 221, 224, 0.45);
+  border-radius: 12px;
+  background: rgba(16, 221, 224, 0.08);
+}
+.backlinks-block .bl-num {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.backlinks-block .bl-label { font-weight: 700; font-size: 14px; }
+.backlinks-block .bl-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.backlinks-block.unavailable { border-color: var(--line); background: #f7f8f9; }
+.backlinks-block.unavailable .bl-num { color: var(--muted); }
+
+/* Stat cards grid (2 x 2) */
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 .stat {
@@ -140,6 +163,19 @@ main { padding: 14px; }
 .area-chart .line { stroke: var(--cyan); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .area-chart .dot { fill: var(--cyan); }
 .area-chart .ytick, .area-chart .xtick { fill: var(--muted); font-size: 9px; }
+
+/* Sitemap */
+.sitemap-row { font-size: 13px; font-weight: 600; }
+.sitemap-row.ok { color: var(--high); }
+.sitemap-row.bad { color: var(--down); }
+.sitemap-url {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* AI verdict */
 .ai-verdict p { margin: 0 0 8px; line-height: 1.45; }
