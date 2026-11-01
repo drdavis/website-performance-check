@@ -126,7 +126,6 @@ function aiCard(ai) {
 
 function resultView(r) {
   return `
-    ${backlinksBlock(r.backlinks)}
     <div class="stats">
       ${statCard("Organic Keywords", compactNumber(r.keywords.total), r.changes?.keywords)}
       ${statCard("Organic Monthly Traffic", compactNumber(r.traffic), r.changes?.traffic)}
@@ -136,6 +135,7 @@ function resultView(r) {
     ${trafficChartCard(r)}
     ${sitemapCard(r.sitemap)}
     ${aiCard(r.ai)}
+    ${backlinksBlock(r.backlinks)}
     <footer>Checked ${esc(new Date(r.checkedAt).toLocaleString())}<br>Built by D3 Digital Media</footer>
   `;
 }

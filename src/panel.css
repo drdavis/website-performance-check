@@ -75,7 +75,7 @@ main { padding: 14px; }
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  margin-bottom: 12px;
+  margin-top: 12px;
   border: 1px solid rgba(16, 221, 224, 0.45);
   border-radius: 12px;
   background: rgba(16, 221, 224, 0.08);
